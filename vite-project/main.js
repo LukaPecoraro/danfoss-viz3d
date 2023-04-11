@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { PLAN_DATA } from './grid_data2.js';
+//import { PLAN_DATA } from './grid_data2.js';
+
+let PLAN_DATA = {}
 
 
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
@@ -9,21 +11,99 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import Stats from 'three/addons/libs/stats.module.js';
 import Interaction from 'three.interaction/src/interaction/Interaction.js'
 
+export { init, animate }
+
 
 let container, stats;
 let camera, controls, scene, renderer;
 let pickingTexture, pickingScene;
 let highlightBox;
 
-
-
 const pickingData = [];
-
 const pointer = new THREE.Vector2();
 const offset = new THREE.Vector3( 10, 10, 10 );
 
-init();
-animate();
+const negOffset = new THREE.Vector3( -10, 10, -10 );
+
+
+
+// // SEND A REQUEST TO THE FRONTEND
+var boxes = []; // Array to store boxes
+// function addBox() {
+document.getElementById ("btnAdd").addEventListener ("click", function(event) {
+  var width = document.getElementById("width").value;
+  var height = document.getElementById("height").value;
+  var depth = document.getElementById("depth").value;
+
+  var box = {
+      width: parseInt(width),
+      height: parseInt(height),
+      depth: parseInt(depth),
+      position_x : 0,
+      position_y : 0,
+      position_z : 0
+  };
+
+  boxes.push(box);
+
+  document.getElementById("width").value = "";
+  document.getElementById("height").value = "";
+  document.getElementById("depth").value = "";
+
+  // Update box list
+  var boxList = document.getElementById("boxList");
+  var listItem = document.createElement("li");
+  listItem.textContent = "Width: " + box.width + ", Height: " + box.height + ", Depth: " + box.depth;
+  boxList.appendChild(listItem);
+});
+
+
+let grid = {
+    id : "grid_1",
+    width : 8,
+    height : 8,
+    depth : 8
+}
+document.getElementById("gridShape").textContent = "W:" + grid.width + " H:"+  grid.height + " D:" + grid.depth;
+
+
+document.getElementById("myForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form from submitting
+    // Create data object to send in POST request
+    var data = {
+        boxes: boxes,
+        grid: grid
+    };
+    console.log(data)
+    fetch("http://localhost:8080/solveConf", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) {
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error("Error: " + response.status);
+        }
+    })
+    .then(function(resp) {
+        console.log("Response:", resp);
+        PLAN_DATA = resp;
+        init();
+        animate();
+        // Handle successful response
+    })
+    .catch(function(error) {
+        console.error(error);
+        // Handle error
+    });
+});
+
+
+
 
 function init() {
 
@@ -42,10 +122,10 @@ function init() {
   light.position.set( 0, 500, 2000 );
   //scene.add( light );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+  renderer = new THREE.WebGLRenderer( { antialias: true } );
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
 
   camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 4000 );
   camera.position.set(400,2000, 900)
@@ -109,8 +189,8 @@ function init() {
 
   // add grid
   const grid_data = PLAN_DATA.grid
-  let grid_geom = new THREE.BoxGeometry(grid_data.width, grid_data.height, grid_data.depth);
-  grid_geom.translate(grid_data.width/ 2,grid_data.height / 2,grid_data.depth /2) // translate because anchor is at the center
+  let grid_geom = new THREE.BoxGeometry(grid_data.width, 20, grid_data.depth);
+  grid_geom.translate(grid_data.width/ 2, -10 ,grid_data.depth /2) // translate because anchor is at the center
   const material = new THREE.MeshBasicMaterial( {color: 0x3B3B3B} );
   let grid = new THREE.Mesh( grid_geom, material );
   scene.add(grid)
@@ -221,8 +301,6 @@ function init() {
   // controls.staticMoving = true;
   //  controls.dynamicDampingFactor = 0.3;
 
-  stats = new Stats();
-  container.appendChild( stats.dom );
 
   renderer.domElement.addEventListener( 'pointermove', onPointerMove );
 
@@ -242,8 +320,6 @@ function animate() {
   requestAnimationFrame( animate );
 
   render();
-  stats.update();
-
 }
 
 function pick() {
