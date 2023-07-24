@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 //import { PLAN_DATA } from './grid_data2.js';
 
-let PLAN_DATA = {}
+//let PLAN_DATA = {}
 
 
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
@@ -102,6 +102,9 @@ document.getElementById("myForm").addEventListener("submit", function(event) {
     });
 });
 
+import { PLAN_DATA } from './grid_data DEMO.js';
+init();
+animate();
 
 
 
@@ -176,7 +179,7 @@ function init() {
   // highlight box
   highlightBox = new THREE.Mesh(
     new THREE.BoxGeometry(),
-    new THREE.MeshPhongMaterial( { color: 0xfff133, flatShading: true,  polygonOffsetFactor: 1,  polygonOffsetUnits: 1	})
+    new THREE.MeshPhongMaterial( { color: 0xe2000f, flatShading: true,  polygonOffsetFactor: 1,  polygonOffsetUnits: 1	})
     //new THREE.MeshLambertMaterial( { color: 0xffff00} )
   );
   var geo = new THREE.EdgesGeometry( highlightBox.geometry );
@@ -191,7 +194,7 @@ function init() {
   const grid_data = PLAN_DATA.grid
   let grid_geom = new THREE.BoxGeometry(grid_data.width, 20, grid_data.depth);
   grid_geom.translate(grid_data.width/ 2, -10 ,grid_data.depth /2) // translate because anchor is at the center
-  const material = new THREE.MeshBasicMaterial( {color: 0x3B3B3B} );
+  const material = new THREE.MeshBasicMaterial( {color: 0x303030} );
   let grid = new THREE.Mesh( grid_geom, material );
   scene.add(grid)
   grid.name = "PLANNING GRID"
@@ -199,6 +202,10 @@ function init() {
 
 
   console.log(PLAN_DATA)
+
+
+  controls.target.set(grid_data.width / 2, grid_data.height / 2, grid_data.depth / 2); // SET PIVOT POINT of camera
+
 
   // draw boxes
 
@@ -220,9 +227,9 @@ function init() {
     rotation.z = 0; //Math.random() * 2 * Math.PI;
 
     const scale = new THREE.Vector3();
-    scale.x = box.width; // Math.random() * 200 + 100;
-    scale.y = box.height; // Math.random() * 200 + 100;
-    scale.z = box.depth; // Math.random() * 200 + 100;
+    scale.x = box.width - 20; // space between two boxes
+    scale.y = box.height; 
+    scale.z = box.depth - 20; // space between two boxes
 
     quaternion.setFromEuler( rotation );
     matrix.compose( position, quaternion, scale );
@@ -231,7 +238,17 @@ function init() {
 
     // give the geometry's vertices a random color, to be displayed
 
-    applyVertexColors( geometry, color.setHex( Math.random() * 0xffffff ) );
+    // DEFAULT; VERY NICE AND COOL
+    //applyVertexColors( geometry, color.setHex( Math.random() * 0xffffff ) );
+
+    // VANESSA COLORS
+    applyVertexColors( geometry, color.setHex(0xBDBDBD) );
+
+    // GRID COLOR // TODO FIX TO JE HARDCODAN
+    if (i >= planned_boxes.length - 4){
+      applyVertexColors( geometry, color.setHex(0x7D7D7D));
+    }
+
 
     geometriesDrawn.push( geometry );
 
@@ -279,10 +296,9 @@ function init() {
       scale: scale
 
     };
-
-
-
   }
+
+
 
   //const objects = new THREE.Mesh( BufferGeometryUtils.mergeGeometries( geometriesDrawn ), defaultMaterial );
   //scene.add( objects );
